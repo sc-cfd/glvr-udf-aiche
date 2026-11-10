@@ -4,8 +4,8 @@
  *          in a gas-liquid multiphase flow (Euler-Euler)
  *
  * Species index:
- *   Liquid phase  -- MEA (0), MEAH (1), MEACOO- (2), H2O (2)
- *   Gas    phase  -- CO2 (0), N2  (1)
+ *   Liquid phase  -- MEA (0), MEAH (1), MEACOO- (2), H2O (3)
+ *   Gas    phase  -- CO2 (0), H2O  (1)
  *
  * UDMI storage:
  *   UDMI[0] -- liquid dynamic viscosity      [Pa·s]
@@ -85,11 +85,11 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
         /* epsilon = C_mu * k * omega  [m²/s³] */
         c_d = 0.09 * C_K(cell, thread_liq) * C_O(cell, thread_liq);
 		
-		/* --- liquid-side mass transfer coefficient (Calderbank-Moo-Young) --- */
+		/* --- liquid-side mass transfer coefficient (eddy cell model (Lamont and Scott)) --- */
         kL = K * pow(d_co2, 0.5) * pow((c_d / v * density), 0.25); /* [m/s] */
 		
 		 /* --- pseudo-first-order reaction rate constant --- */
-        /* k_r = k2 * c_MEA  [1/s] */
+        /* k_r = kf * c_MEA  [1/s] */
         k_r = pow(10.0, (10.99 - 2152.0 / T_l)) * c_mea;
 		
 		/* --- Hatta number and enhancement factor --- */
@@ -97,16 +97,16 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
         E  = pow((1.0 + pow(Ha, 2)), 0.5);               /* enhancement factor (fast reaction approximation) */
 		
 		/* --- Henry's constant --- */
-        Henry = exp(896.5 / T_l - 10.5913);              /* [mol/(m³·kPa)] */
+        Henry = exp(896.5 / T_l - 10.5913);              /* [kmol/(m³·kPa)] */
 		
-		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [mol/m³] --- */
+		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [kmol/m³] --- */
         yL = exp(35.81 * y_meacoo - 3.09) * Henry
              - (C_P(cell, thread_gas) / 1000.0 + 101.325) * Henry
              * (C_YI(cell, thread_gas, 0)
              / (C_YI(cell, thread_gas, 0) + 2.44 * (1.0 - C_YI(cell, thread_gas, 0))));
 			 
 		 /* --- CO2 gas-phase mass source term --- */
-        /* E * kL [m/s] * ae [m²/m³] * M_CO2 [kg/mol] * yL [mol/m³] = [kg/(m³·s)] */
+        /* E * kL [m/s] * ae [m²/m³] * M_CO2 [kg/kmol] * yL [kmol/m³] = [kg/(m³·s)] */
         m_dot_co2 = E * kL * ae * 44.0 * yL;
 		
 		   dS[eqn] = 0.0;                
@@ -167,11 +167,11 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
         /* epsilon = C_mu * k * omega  [m²/s³] */
         c_d = 0.09 * C_K(cell, thread_liq) * C_O(cell, thread_liq);
 		
-		/* --- liquid-side mass transfer coefficient (Calderbank-Moo-Young) --- */
+		/* --- liquid-side mass transfer coefficient (eddy cell model (Lamont and Scott)) --- */
         kL = K * pow(d_co2, 0.5) * pow((c_d / v * density), 0.25); /* [m/s] */
 		
 		 /* --- pseudo-first-order reaction rate constant --- */
-        /* k_r = k2 * c_MEA  [1/s] */
+        /* k_r = kf * c_MEA  [1/s] */
         k_r = pow(10.0, (10.99 - 2152.0 / T_l)) * c_mea;
 		
 		/* --- Hatta number and enhancement factor --- */
@@ -179,16 +179,16 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
         E  = pow((1.0 + pow(Ha, 2)), 0.5);               /* enhancement factor (fast reaction approximation) */
 		
 		/* --- Henry's constant --- */
-        Henry = exp(896.5 / T_l - 10.5913);              /* [mol/(m³·kPa)] */
+        Henry = exp(896.5 / T_l - 10.5913);              /* [kmol/(m³·kPa)] */
 		
-		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [mol/m³] --- */
+		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [kmol/m³] --- */
         yL = exp(35.81 * y_meacoo - 3.09) * Henry
              - (C_P(cell, thread_gas) / 1000.0 + 101.325) * Henry
              * (C_YI(cell, thread_gas, 0)
              / (C_YI(cell, thread_gas, 0) + 2.44 * (1.0 - C_YI(cell, thread_gas, 0))));
 			 
 		 /* --- CO2 gas-phase mass source term --- */
-        /* E * kL [m/s] * ae [m²/m³] * M_CO2 [kg/mol] * yL [mol/m³] = [kg/(m³·s)] */
+        /* E * kL [m/s] * ae [m²/m³] * M_CO2 [kg/kmol] * yL [kmol/m³] = [kg/(m³·s)] */
         m_dot_co2 = E * kL * ae * 44.0 * yL;
 		
 		   dS[eqn] = 0.0;                
@@ -246,11 +246,11 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
         /* epsilon = C_mu * k * omega  [m²/s³] */
         c_d = 0.09 * C_K(cell, thread_liq) * C_O(cell, thread_liq);
 		
-		/* --- liquid-side mass transfer coefficient (Calderbank-Moo-Young) --- */
+		/* --- liquid-side mass transfer coefficient (eddy cell model (Lamont and Scott)) --- */
         kL = K * pow(d_co2, 0.5) * pow((c_d / v * density), 0.25); /* [m/s] */
 		
 		 /* --- pseudo-first-order reaction rate constant --- */
-        /* k_r = k2 * c_MEA  [1/s] */
+        /* k_r = kf * c_MEA  [1/s] */
         k_r = pow(10.0, (10.99 - 2152.0 / T_l)) * c_mea;
 		
 		/* --- Hatta number and enhancement factor --- */
@@ -258,16 +258,16 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
         E  = pow((1.0 + pow(Ha, 2)), 0.5);               /* enhancement factor (fast reaction approximation) */
 		
 		/* --- Henry's constant --- */
-        Henry = exp(896.5 / T_l - 10.5913);              /* [mol/(m³·kPa)] */
+        Henry = exp(896.5 / T_l - 10.5913);              /* [kmol/(m³·kPa)] */
 		
-		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [mol/m³] --- */
+		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [kmol/m³] --- */
         yL = exp(35.81 * y_meacoo - 3.09) * Henry
              - (C_P(cell, thread_gas) / 1000.0 + 101.325) * Henry
              * (C_YI(cell, thread_gas, 0)
              / (C_YI(cell, thread_gas, 0) + 2.44 * (1.0 - C_YI(cell, thread_gas, 0))));
 			 
 		 /* --- MEA liq-phase mass source term --- */
-        /* 2 * E * kL [m/s] * ae [m²/m³] * M_MEA [kg/mol] * yL [mol/m³] = [kg/(m³·s)] */
+        /* 2 * E * kL [m/s] * ae [m²/m³] * M_MEA [kg/kmol] * yL [kmol/m³] = [kg/(m³·s)] */
         m_dot_mea = 2* E * kL * ae * 61.0 * yL;
 		
 		   dS[eqn] = 0.0;                
@@ -325,11 +325,11 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
         /* epsilon = C_mu * k * omega  [m²/s³] */
         c_d = 0.09 * C_K(cell, thread_liq) * C_O(cell, thread_liq);
 		
-		/* --- liquid-side mass transfer coefficient (Calderbank-Moo-Young) --- */
+		/* --- liquid-side mass transfer coefficient (eddy cell model (Lamont and Scott)) --- */
         kL = K * pow(d_co2, 0.5) * pow((c_d / v * density), 0.25); /* [m/s] */
 		
 		 /* --- pseudo-first-order reaction rate constant --- */
-        /* k_r = k2 * c_MEA  [1/s] */
+        /* k_r = kf * c_MEA  [1/s] */
         k_r = pow(10.0, (10.99 - 2152.0 / T_l)) * c_mea;
 		
 		/* --- Hatta number and enhancement factor --- */
@@ -337,16 +337,16 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
         E  = pow((1.0 + pow(Ha, 2)), 0.5);               /* enhancement factor (fast reaction approximation) */
 		
 		/* --- Henry's constant --- */
-        Henry = exp(896.5 / T_l - 10.5913);              /* [mol/(m³·kPa)] */
+        Henry = exp(896.5 / T_l - 10.5913);              /* [kmol/(m³·kPa)] */
 		
-		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [mol/m³] --- */
+		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [kmol/m³] --- */
         yL = exp(35.81 * y_meacoo - 3.09) * Henry
              - (C_P(cell, thread_gas) / 1000.0 + 101.325) * Henry
              * (C_YI(cell, thread_gas, 0)
              / (C_YI(cell, thread_gas, 0) + 2.44 * (1.0 - C_YI(cell, thread_gas, 0))));
 			 
 		 /* --- MEAH liq-phase mass source term --- */
-        /* -1 * E * kL [m/s] * ae [m²/m³] * M_MEAH [kg/mol] * yL [mol/m³] = [kg/(m³·s)] */
+        /* -1 * E * kL [m/s] * ae [m²/m³] * M_MEAH [kg/kmol] * yL [kmol/m³] = [kg/(m³·s)] */
         m_dot_meah = - E * kL * ae * 62.0 * yL;
 		
 		   dS[eqn] = 0.0;                
@@ -405,11 +405,11 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
         /* epsilon = C_mu * k * omega  [m²/s³] */
         c_d = 0.09 * C_K(cell, thread_liq) * C_O(cell, thread_liq);
 		
-		/* --- liquid-side mass transfer coefficient (Calderbank-Moo-Young) --- */
+		/* --- liquid-side mass transfer coefficient (eddy cell model (Lamont and Scott)) --- */
         kL = K * pow(d_co2, 0.5) * pow((c_d / v * density), 0.25); /* [m/s] */
 		
 		 /* --- pseudo-first-order reaction rate constant --- */
-        /* k_r = k2 * c_MEA  [1/s] */
+        /* k_r = kf * c_MEA  [1/s] */
         k_r = pow(10.0, (10.99 - 2152.0 / T_l)) * c_mea;
 		
 		/* --- Hatta number and enhancement factor --- */
@@ -417,16 +417,16 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
         E  = pow((1.0 + pow(Ha, 2)), 0.5);               /* enhancement factor (fast reaction approximation) */
 		
 		/* --- Henry's constant --- */
-        Henry = exp(896.5 / T_l - 10.5913);              /* [mol/(m³·kPa)] */
+        Henry = exp(896.5 / T_l - 10.5913);              /* [kmol/(m³·kPa)] */
 		
-		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [mol/m³] --- */
+		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [kmol/m³] --- */
         yL = exp(35.81 * y_meacoo - 3.09) * Henry
              - (C_P(cell, thread_gas) / 1000.0 + 101.325) * Henry
              * (C_YI(cell, thread_gas, 0)
              / (C_YI(cell, thread_gas, 0) + 2.44 * (1.0 - C_YI(cell, thread_gas, 0))));
 			 
 		 /* --- MEACOO liq-phase mass source term --- */
-        /* -1 * E * kL [m/s] * ae [m²/m³] * M_MEACOO [kg/mol] * yL [mol/m³] = [kg/(m³·s)] */
+        /* -1 * E * kL [m/s] * ae [m²/m³] * M_MEACOO [kg/kmol] * yL [kmol/m³] = [kg/(m³·s)] */
         m_dot_meacoo = - E * kL * ae * 104.0 * yL;
 		
 		   dS[eqn] = 0.0;                
@@ -445,7 +445,7 @@ DEFINE_PROPERTY(liq_mu_udf, cell, thread_liq)
 /*------------------------------------------------------------
  * DEFINE_SOURCE : liqmea_heat_src
  * Returns : reaction heat source in the LIQUID phase  [W/m³]
- * Note    : Reads the MEA mass source from UDMI[2] to back-calculate
+ * Note    : Reads the CO2 mass source from UDMI[2] to back-calculate
  *           the CO2 molar flux, then multiplies by the reaction enthalpy.
  *           Negative sign: desorption is endothermic (absorption is exothermic).
  *------------------------------------------------------------*/
@@ -512,11 +512,11 @@ DEFINE_SOURCE(liqmea_heat_src, cell, thread_liq, dS, eqn)
         /* epsilon = C_mu * k * omega  [m²/s³] */
         c_d = 0.09 * C_K(cell, thread_liq) * C_O(cell, thread_liq);
 		
-		/* --- liquid-side mass transfer coefficient (Calderbank-Moo-Young) --- */
+		/* --- liquid-side mass transfer coefficient (eddy cell model (Lamont and Scott)) --- */
         kL = K * pow(d_co2, 0.5) * pow((c_d / v * density), 0.25); /* [m/s] */
 		
 		 /* --- pseudo-first-order reaction rate constant --- */
-        /* k_r = k2 * c_MEA  [1/s] */
+        /* k_r = kf * c_MEA  [1/s] */
         k_r = pow(10.0, (10.99 - 2152.0 / T_l)) * c_mea;
 		
 		/* --- Hatta number and enhancement factor --- */
@@ -524,9 +524,9 @@ DEFINE_SOURCE(liqmea_heat_src, cell, thread_liq, dS, eqn)
         E  = pow((1.0 + pow(Ha, 2)), 0.5);               /* enhancement factor (fast reaction approximation) */
 		
 		/* --- Henry's constant --- */
-        Henry = exp(896.5 / T_l - 10.5913);              /* [mol/(m³·kPa)] */
+        Henry = exp(896.5 / T_l - 10.5913);              /* [kmol/(m³·kPa)] */
 		
-		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [mol/m³] --- */
+		/* --- driving force yL = equilibrium CO2 conc. - actual CO2 conc.  [kmol/m³] --- */
         yL = exp(35.81 * y_meacoo - 3.09) * Henry
              - (C_P(cell, thread_gas) / 1000.0 + 101.325) * Henry
              * (C_YI(cell, thread_gas, 0)
